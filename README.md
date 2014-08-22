@@ -1,4 +1,4 @@
-BabyStepsRoslyn
-===============
+Baby Steps Roslyn
+=================
 
 Learning Roslyn
