@@ -1,0 +1,8 @@
+﻿- count classes
+- count methods of classes
+- count public/private/protected methods of classes
+	- find protected non-virtual methods
+- count fields and properties in classes
+	- count private and protected fields and properties
+	- find provate/protected fields and properties not used in all methods
+- level of abstraction: a method which calls another method is at higher level of abstraction
