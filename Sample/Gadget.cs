@@ -2,5 +2,14 @@
 {
     class Gadget
     {
+        void Foo()
+        {
+            
+        }
+
+        void Bar()
+        {
+            
+        }
     }
 }

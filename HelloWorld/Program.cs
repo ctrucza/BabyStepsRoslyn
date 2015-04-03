@@ -10,9 +10,9 @@ namespace HelloWorld
     {
         static void Main(string[] args)
         {
-            OpenSolution();
-            OpenProject();
-            CountClasses();
+            //OpenSolution();
+            //OpenProject();
+            //CountClasses();
             CountMethodsInClasses();
         }
 
@@ -97,7 +97,7 @@ namespace HelloWorld
             classes.ForEach(c =>
             {
                 Console.WriteLine(c.Identifier);
-                c.Members.OfType<MethodDeclarationSyntax>().ToList().ForEach(m => Console.WriteLine(m.Identifier));
+                c.Members.OfType<MethodDeclarationSyntax>().ToList().ForEach(m => Console.WriteLine("\t" + m.Identifier));
             });
         }
     }
