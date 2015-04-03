@@ -10,11 +10,11 @@ namespace HelloWorld
     {
         static void Main(string[] args)
         {
-			OpenSolution();
-			OpenProject();
-			CountClasses();
-			CountMethodsInClasses();
-		}
+            OpenSolution();
+            OpenProject();
+            CountClasses();
+            CountMethodsInClasses();
+        }
 
         private static void OpenSolution()
         {
@@ -71,34 +71,34 @@ namespace HelloWorld
             classes.ForEach(c => Console.WriteLine(c.Identifier));
         }
 
-		private static void CountMethodsInClasses()
-		{
-			var workspace = MSBuildWorkspace.Create();
-			var project = workspace.OpenProjectAsync(@"Sample\Sample.csproj").Result;
+        private static void CountMethodsInClasses()
+        {
+            var workspace = MSBuildWorkspace.Create();
+            var project = workspace.OpenProjectAsync(@"Sample\Sample.csproj").Result;
 
-			List<ClassDeclarationSyntax> classes = new List<ClassDeclarationSyntax>();
+            List<ClassDeclarationSyntax> classes = new List<ClassDeclarationSyntax>();
 
-			project.Documents.ToList().ForEach(document =>
-			{
-				var syntaxTree = document.GetSyntaxTreeAsync().Result;
-				var semanticModel = document.GetSemanticModelAsync().Result;
-				var root = document.GetSyntaxRootAsync().Result;
-				var classesInDocument = root.DescendantNodes().OfType<ClassDeclarationSyntax>().ToList();
-				classes.AddRange(classesInDocument);
-			});
+            project.Documents.ToList().ForEach(document =>
+            {
+                var syntaxTree = document.GetSyntaxTreeAsync().Result;
+                var semanticModel = document.GetSemanticModelAsync().Result;
+                var root = document.GetSyntaxRootAsync().Result;
+                var classesInDocument = root.DescendantNodes().OfType<ClassDeclarationSyntax>().ToList();
+                classes.AddRange(classesInDocument);
+            });
 
-			var compilation = project.GetCompilationAsync().Result;
-			compilation.SyntaxTrees.ToList().ForEach(syntaxTree =>
-			{
-				var root = (CompilationUnitSyntax)syntaxTree.GetRoot();
-				var classesInSyntaxTree = root.DescendantNodes().OfType<ClassDeclarationSyntax>().ToList();
-			});
+            var compilation = project.GetCompilationAsync().Result;
+            compilation.SyntaxTrees.ToList().ForEach(syntaxTree =>
+            {
+                var root = (CompilationUnitSyntax)syntaxTree.GetRoot();
+                var classesInSyntaxTree = root.DescendantNodes().OfType<ClassDeclarationSyntax>().ToList();
+            });
 
-			classes.ForEach(c =>
-			{
-				Console.WriteLine(c.Identifier);
-				c.Members.OfType<MethodDeclarationSyntax>().ToList().ForEach(m=>Console.WriteLine(m.Identifier));
-			});
-		}
-	}
+            classes.ForEach(c =>
+            {
+                Console.WriteLine(c.Identifier);
+                c.Members.OfType<MethodDeclarationSyntax>().ToList().ForEach(m => Console.WriteLine(m.Identifier));
+            });
+        }
+    }
 }
