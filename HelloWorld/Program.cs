@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.MSBuild;
 
@@ -12,7 +13,7 @@ namespace HelloWorld
         {
             //OpenSolution();
             //OpenProject();
-            //CountClasses();
+            CountClasses();
             CountMethodsInClasses();
         }
 
@@ -68,6 +69,7 @@ namespace HelloWorld
                 var classesInSyntaxTree = root.DescendantNodes().OfType<ClassDeclarationSyntax>().ToList();
             });
 
+            Console.WriteLine("{0} classes found: ", classes.Count);
             classes.ForEach(c => Console.WriteLine(c.Identifier));
         }
 
@@ -75,30 +77,27 @@ namespace HelloWorld
         {
             var workspace = MSBuildWorkspace.Create();
             var project = workspace.OpenProjectAsync(@"Sample\Sample.csproj").Result;
-
-            List<ClassDeclarationSyntax> classes = new List<ClassDeclarationSyntax>();
-
-            project.Documents.ToList().ForEach(document =>
-            {
-                var syntaxTree = document.GetSyntaxTreeAsync().Result;
-                var semanticModel = document.GetSemanticModelAsync().Result;
-                var root = document.GetSyntaxRootAsync().Result;
-                var classesInDocument = root.DescendantNodes().OfType<ClassDeclarationSyntax>().ToList();
-                classes.AddRange(classesInDocument);
-            });
-
             var compilation = project.GetCompilationAsync().Result;
-            compilation.SyntaxTrees.ToList().ForEach(syntaxTree =>
-            {
-                var root = (CompilationUnitSyntax)syntaxTree.GetRoot();
-                var classesInSyntaxTree = root.DescendantNodes().OfType<ClassDeclarationSyntax>().ToList();
-            });
 
-            classes.ForEach(c =>
+            Console.WriteLine("Methods in classes:");
+            var syntaxTrees = compilation.SyntaxTrees;
+            foreach (var syntaxTree in syntaxTrees)
             {
-                Console.WriteLine(c.Identifier);
-                c.Members.OfType<MethodDeclarationSyntax>().ToList().ForEach(m => Console.WriteLine("\t" + m.Identifier));
-            });
+                var semanticModel = compilation.GetSemanticModel(syntaxTree);
+                var root = (CompilationUnitSyntax)syntaxTree.GetRoot();
+                var classesInSyntaxTree = root.DescendantNodes().OfType<ClassDeclarationSyntax>();
+                foreach (var classDeclarationSyntax in classesInSyntaxTree)
+                {
+                    Console.WriteLine(classDeclarationSyntax.Identifier);
+                    var methods = classDeclarationSyntax.DescendantNodes().OfType<MethodDeclarationSyntax>();
+                    foreach (var methodDeclarationSyntax in methods)
+                    {
+                        IMethodSymbol methodSymbol = (IMethodSymbol)semanticModel.GetDeclaredSymbol(methodDeclarationSyntax);
+                        Accessibility declaredAccessibility = methodSymbol.DeclaredAccessibility;
+                        Console.WriteLine("{0} {1} {2}", declaredAccessibility, methodSymbol.ReturnType, methodSymbol.Name);
+                    }
+                }
+            }
         }
     }
 }
