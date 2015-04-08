@@ -80,6 +80,7 @@ namespace HelloWorld
             var compilation = project.GetCompilationAsync().Result;
 
             Console.WriteLine("Methods in classes:");
+            List<IMethodSymbol> allMethods = new List<IMethodSymbol>();
             var syntaxTrees = compilation.SyntaxTrees;
             foreach (var syntaxTree in syntaxTrees)
             {
@@ -88,16 +89,37 @@ namespace HelloWorld
                 var classesInSyntaxTree = root.DescendantNodes().OfType<ClassDeclarationSyntax>();
                 foreach (var classDeclarationSyntax in classesInSyntaxTree)
                 {
-                    Console.WriteLine(classDeclarationSyntax.Identifier);
                     var methods = classDeclarationSyntax.DescendantNodes().OfType<MethodDeclarationSyntax>();
                     foreach (var methodDeclarationSyntax in methods)
                     {
                         IMethodSymbol methodSymbol = (IMethodSymbol)semanticModel.GetDeclaredSymbol(methodDeclarationSyntax);
-                        Accessibility declaredAccessibility = methodSymbol.DeclaredAccessibility;
-                        Console.WriteLine("{0} {1} {2}", declaredAccessibility, methodSymbol.ReturnType, methodSymbol.Name);
+                        allMethods.Add(methodSymbol);
+                        //Accessibility declaredAccessibility = methodSymbol.DeclaredAccessibility;
+                        //Console.WriteLine("{0} {1} {2}", declaredAccessibility, methodSymbol.ReturnType, methodSymbol.Name);
                     }
                 }
             }
+
+            var methodsByClass = allMethods.GroupBy(m => m.ContainingType).ToList();
+            methodsByClass.ForEach(m =>
+            {
+                Console.WriteLine(m.Key);
+                foreach (Accessibility accessibility in Enum.GetValues(typeof(Accessibility)))
+                {
+                    var methodSymbols = m.Where(x=>x.DeclaredAccessibility == accessibility).ToList();
+                    if (!methodSymbols.Any())
+                        continue;
+                    Console.WriteLine(accessibility);
+                    methodSymbols.ForEach(x =>
+                    {
+                        Console.WriteLine("\t{0} {1}", x.ReturnType, x.Name);
+                    });
+                }
+                foreach (var methodSymbol in m)
+                {
+                    Console.WriteLine(methodSymbol.Name);
+                }
+            });
         }
     }
 }
