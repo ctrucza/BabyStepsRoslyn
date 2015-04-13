@@ -2,7 +2,7 @@
 {
     class Widget
     {
-        void Foo()
+        public void Foo()
         {
             
         }

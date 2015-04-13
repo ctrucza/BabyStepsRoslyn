@@ -4,6 +4,8 @@
     {
         void Foo()
         {
+            Widget w = new Widget();
+            w.Foo();
             
         }
 
