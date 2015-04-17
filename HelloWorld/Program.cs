@@ -1,12 +1,68 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
+using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.MSBuild;
 
 namespace HelloWorld
 {
+    class Class
+    {
+        private ClassDeclarationSyntax syntax;
+        private SemanticModel model;
+
+        public List<Method> Methods = new List<Method>();
+
+        public string Name => syntax.Identifier.ToString();
+
+        public Class(ClassDeclarationSyntax syntax, SemanticModel model)
+        {
+            this.syntax = syntax;
+            this.model = model;
+
+            CollectMethods();
+        }
+
+        private void CollectMethods()
+        {
+            var methods = syntax.DescendantNodes().OfType<MethodDeclarationSyntax>();
+            foreach (var methodDeclarationSyntax in methods)
+            {
+                Methods.Add(new Method(methodDeclarationSyntax, model));
+            }
+        }
+    }
+
+    class Method
+    {
+        private MethodDeclarationSyntax syntax;
+        private SemanticModel model;
+
+        public List<string> Calls = new List<string>();
+        public string Name => syntax.Identifier.ToString();
+
+        public Method(MethodDeclarationSyntax syntax, SemanticModel model)
+        {
+            this.syntax = syntax;
+            this.model = model;
+
+            var descendantNodes = syntax.DescendantNodes();
+            var invocations = descendantNodes.OfType<InvocationExpressionSyntax>();
+            invocations.ToList().ForEach(
+                invocation =>
+                {
+                    var symbol = model.GetSymbolInfo(invocation).Symbol;
+                    var containingType = symbol.ContainingType;
+                    var name = symbol.Name;
+                    Calls.Add(string.Format("{0} in {1}", name, containingType));
+                });
+        }
+
+
+    }
     class Program
     {
         static void Main(string[] args)
@@ -82,6 +138,9 @@ namespace HelloWorld
             Console.WriteLine("Methods in classes:");
             List<IMethodSymbol> allMethods = new List<IMethodSymbol>();
             Dictionary<IMethodSymbol, List<ISymbol>> calls = new Dictionary<IMethodSymbol, List<ISymbol>>();
+
+            List<Class> classes = new List<Class>();
+
             var syntaxTrees = compilation.SyntaxTrees;
             foreach (var syntaxTree in syntaxTrees)
             {
@@ -90,51 +149,22 @@ namespace HelloWorld
                 var classesInSyntaxTree = root.DescendantNodes().OfType<ClassDeclarationSyntax>();
                 foreach (var classDeclarationSyntax in classesInSyntaxTree)
                 {
-                    var methods = classDeclarationSyntax.DescendantNodes().OfType<MethodDeclarationSyntax>();
-                    foreach (var methodDeclarationSyntax in methods)
-                    {
-                        IMethodSymbol methodSymbol = (IMethodSymbol)semanticModel.GetDeclaredSymbol(methodDeclarationSyntax);
-                        allMethods.Add(methodSymbol);
-
-                        calls.Add(methodSymbol, new List<ISymbol>());
-
-                        var descendantNodes = methodDeclarationSyntax.DescendantNodes();
-                        var invocations = descendantNodes.OfType<InvocationExpressionSyntax>();
-                        invocations.ToList().ForEach(
-                            i =>
-                            {
-                                ISymbol symbol = semanticModel.GetSymbolInfo(i).Symbol;
-                                calls[methodSymbol].Add(symbol);
-                            });
-                    }
+                    classes.Add(new Class(classDeclarationSyntax, semanticModel));
                 }
             }
 
-            var methodsByClass = allMethods.GroupBy(m => m.ContainingType).ToList();
-            methodsByClass.ForEach(m =>
+            foreach (var @class in classes)
             {
-                Console.WriteLine(m.Key);
-                foreach (Accessibility accessibility in Enum.GetValues(typeof(Accessibility)))
+                Console.WriteLine(@class.Name);
+                foreach (var method in @class.Methods)
                 {
-                    var methodsInClass = m.Where(x=>x.DeclaredAccessibility == accessibility).ToList();
-                    if (!methodsInClass.Any())
-                        continue;
-                    Console.WriteLine(accessibility);
-                    methodsInClass.ForEach(x =>
+                    Console.WriteLine("\t" + method.Name);
+                    foreach (var calledMethod in method.Calls)
                     {
-                        Console.WriteLine("\t{0} {1}", x.ReturnType, x.Name);
-                        if (calls[x].Any())
-                        {
-                            Console.WriteLine("\tcalls to:");
-                            calls[x].ForEach(d =>
-                            {
-                                Console.WriteLine("\t\t" + d.ContainingType+"."+d.Name);
-                            });
-                        }
-
-                    });
+                        Console.WriteLine("\t\t" + calledMethod);
+                    }
                 }
-            });
+            }
         }
     }
 }

@@ -2,6 +2,8 @@
     - find properties/variables in classes
     - in methods, find references to properties/variables
     - find all references to a property/variable
+        - collect classes and methods and members
+
 - count public/private/protected methods of classes
 	- find protected non-virtual methods
     - find private methods not called

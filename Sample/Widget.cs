@@ -2,6 +2,7 @@
 {
     class Widget
     {
+        private int n;
         public void Foo()
         {
             
