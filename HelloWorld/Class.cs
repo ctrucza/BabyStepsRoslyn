@@ -13,6 +13,7 @@ namespace HelloWorld
         public List<Method> Methods = new List<Method>();
 
         public string Name => syntax.Identifier.ToString();
+        public int Loc => Methods.Sum(m => m.Loc);
 
         public Class(ClassDeclarationSyntax syntax, SemanticModel model)
         {

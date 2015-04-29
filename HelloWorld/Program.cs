@@ -108,7 +108,7 @@ namespace HelloWorld
 
         private static void ShowClass(Class c)
         {
-            Console.WriteLine(c.Name);
+            Console.WriteLine(c.Name + "(" + c.Loc + ")");
             if (!c.Methods.Any())
                 return;
 
@@ -119,7 +119,7 @@ namespace HelloWorld
         {
             foreach (var method in c.Methods)
             {
-                Console.WriteLine("\t" + method.Name);
+                Console.WriteLine("\t" + method.Name + "(" + method.Loc + ")");
                 if (!method.Calls.Any())
                     continue;
 
