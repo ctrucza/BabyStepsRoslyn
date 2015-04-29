@@ -14,7 +14,8 @@ namespace HelloWorld
             //OpenSolution();
             //OpenProject();
             //CountClasses();
-            CountMethodsInClasses();
+            //CountMethodsInClasses();
+            CountMethodEvents();
         }
 
         private static void OpenSolution()
@@ -71,6 +72,26 @@ namespace HelloWorld
 
             Console.WriteLine("{0} classes found: ", classes.Count);
             classes.ForEach(c => Console.WriteLine(c.Identifier));
+        }
+
+        private static void CountMethodEvents()
+        {
+            var workspace = MSBuildWorkspace.Create();
+            var project = workspace.OpenProjectAsync(@"Sample\Sample.csproj").Result;
+            foreach (var document in project.Documents)
+            {
+                var root = document.GetSyntaxRootAsync().Result;
+                foreach (var c in root.DescendantNodes().OfType<ClassDeclarationSyntax>())
+                {
+                    foreach (var m in c.DescendantNodes().OfType<MethodDeclarationSyntax>())
+                    {
+                        string className = c.Identifier.ToString();
+                        string methodName = m.Identifier.ToString();
+                        string methodSize = m.Body.Statements.Sum(s => s.GetText().Lines.Count - 1).ToString();
+                        Console.WriteLine("{0}.{1} ({2})", className, methodName, methodSize);
+                    }
+                }
+            }
         }
 
         private static void CountMethodsInClasses()
