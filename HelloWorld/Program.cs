@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using LibGit2Sharp;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.MSBuild;
@@ -15,7 +17,90 @@ namespace HelloWorld
             //OpenProject();
             //CountClasses();
             //CountMethodsInClasses();
-            CountMethodEvents();
+            //CountMethodEvents();
+            CollectMethodEventsFromHistory();
+        }
+
+        private static void CollectMethodEventsFromHistory()
+        {
+            var repositoryPath = @"H:\Battleship";
+            var solutionFile = repositoryPath + @"\" + "Battleship.sln";
+
+            Repository repository = new Repository(repositoryPath);
+            foreach (Commit commit in repository.Commits.Reverse())
+            {
+                repository.Checkout(commit);
+                if (commit.Parents.Count() == 0)
+                {
+                    //Console.WriteLine("This is an initial commit");
+                    continue;
+                }
+                if (commit.Parents.Count() > 1)
+                {
+                    //Console.WriteLine("This is a merge");
+                    continue;
+                }
+
+                ProcessCommit(solutionFile, commit, repository, repositoryPath);
+            }
+        }
+
+        private static void ProcessCommit(string solutionFile, Commit commit, Repository repository, string repositoryPath)
+        {
+            var workspace = MSBuildWorkspace.Create();
+            var solution = workspace.OpenSolutionAsync(solutionFile).Result;
+            ProcessAllFiles(solution, commit);
+
+            //Tree oldTree = commit.Parents.First().Tree;
+            //Tree newTree = commit.Tree;
+            //foreach (var change in repository.Diff.Compare<TreeChanges>(oldTree, newTree, null, null, null))
+            //{
+            //    ProcessChanges(repositoryPath, change, solution, commit);
+            //}
+        }
+
+        private static void ProcessAllFiles(Solution solution, Commit commit)
+        {
+            foreach (var project in solution.Projects)
+            {
+                foreach (var document in project.Documents)
+                {
+                    LogMethodEvents(document, commit);
+                }
+            }
+
+        }
+
+        private static void ProcessChanges(string repositoryPath, TreeEntryChanges change, Solution solution, Commit commit)
+        {
+            var fullFileName = repositoryPath + @"\" + change.Path;
+
+            foreach (var project in solution.Projects)
+            {
+                foreach (var document in project.Documents)
+                {
+                    if (document.FilePath == fullFileName)
+                    {
+                        LogMethodEvents(document, commit);
+                    }
+                }
+            }
+        }
+
+        private static void LogMethodEvents(Document document, Commit commit)
+        {
+            var root = document.GetSyntaxRootAsync().Result;
+            foreach (var c in root.DescendantNodes().OfType<ClassDeclarationSyntax>())
+            {
+                foreach (var m in c.DescendantNodes().OfType<MethodDeclarationSyntax>())
+                {
+                    string date = commit.Committer.When.ToString();
+                    string className = c.Identifier.ToString();
+                    string methodName = m.Identifier.ToString();
+                    string methodSize = m.Body.Statements.Sum(s => s.GetText().Lines.Count - 1).ToString();
+                    Console.WriteLine("{0}\t{1}\t{2}\t{3}", date, className, methodName, methodSize);
+                }
+            }
         }
 
         private static void OpenSolution()
