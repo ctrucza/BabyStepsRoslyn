@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HackingGit", "HackingGit\Ha
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MethodLength", "MethodLength\MethodLength.csproj", "{B4C0A210-40AB-4346-BDF9-E64412970F2A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NamespacesAndClasses", "NamespacesAndClasses\NamespacesAndClasses.csproj", "{04041B3E-A226-46F6-83D0-0B488B4DF8AE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{B4C0A210-40AB-4346-BDF9-E64412970F2A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B4C0A210-40AB-4346-BDF9-E64412970F2A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B4C0A210-40AB-4346-BDF9-E64412970F2A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{04041B3E-A226-46F6-83D0-0B488B4DF8AE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{04041B3E-A226-46F6-83D0-0B488B4DF8AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{04041B3E-A226-46F6-83D0-0B488B4DF8AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{04041B3E-A226-46F6-83D0-0B488B4DF8AE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
