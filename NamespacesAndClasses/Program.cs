@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.MSBuild;
@@ -18,7 +20,37 @@ namespace NamespacesAndClasses
             var ws = MSBuildWorkspace.Create();
             var solution = ws.OpenSolutionAsync(solutionFileName).Result;
 
-            BruteForce(solution);
+            //BruteForce(solution);
+            UsingSymbols(solution);
+        }
+
+        private static void UsingSymbols(Solution solution)
+        {
+            foreach (var project in solution.Projects)
+            {
+                foreach (var document in project.Documents)
+                {
+                    var semanticModel = document.GetSemanticModelAsync().Result;
+                    var root = document.GetSyntaxRootAsync().Result;
+                    foreach (var typeDeclaration in root.DescendantNodes().OfType<TypeDeclarationSyntax>())
+                    {
+                        ITypeSymbol symbol = (ITypeSymbol)semanticModel.GetDeclaredSymbol(typeDeclaration);
+                        if (symbol == null)
+                            continue;
+
+                        var containingNamespace = symbol.ContainingNamespace;
+                        var containingType = symbol.ContainingType;
+
+                        var s = "";
+                        if (containingType != null)
+                            s += containingType;
+                        else if (containingNamespace != null)
+                            s += containingNamespace;
+                        s += "."+symbol.Name;
+                        Console.WriteLine(s);
+                    }
+                }
+            }
         }
 
         private static void BruteForce(Solution solution)
