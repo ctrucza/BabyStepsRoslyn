@@ -29,7 +29,6 @@ namespace HelloWorld
             Repository repository = new Repository(repositoryPath);
             foreach (Commit commit in repository.Commits.Reverse())
             {
-                repository.Checkout(commit);
                 if (commit.Parents.Count() == 0)
                 {
                     //Console.WriteLine("This is an initial commit");
@@ -41,11 +40,12 @@ namespace HelloWorld
                     continue;
                 }
 
-                ProcessCommit(solutionFile, commit, repository, repositoryPath);
+                repository.Checkout(commit);
+                ProcessCommit(solutionFile, commit);
             }
         }
 
-        private static void ProcessCommit(string solutionFile, Commit commit, Repository repository, string repositoryPath)
+        private static void ProcessCommit(string solutionFile, Commit commit)
         {
             var workspace = MSBuildWorkspace.Create();
             var solution = workspace.OpenSolutionAsync(solutionFile).Result;
