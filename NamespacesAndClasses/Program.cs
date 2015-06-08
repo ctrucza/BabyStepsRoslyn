@@ -18,6 +18,11 @@ namespace NamespacesAndClasses
             var ws = MSBuildWorkspace.Create();
             var solution = ws.OpenSolutionAsync(solutionFileName).Result;
 
+            BruteForce(solution);
+        }
+
+        private static void BruteForce(Solution solution)
+        {
             foreach (var project in solution.Projects)
             {
                 foreach (var document in project.Documents)
