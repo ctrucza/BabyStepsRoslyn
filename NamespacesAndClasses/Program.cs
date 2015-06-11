@@ -20,51 +20,40 @@ namespace NamespacesAndClasses
             var ws = MSBuildWorkspace.Create();
             var solution = ws.OpenSolutionAsync(solutionFileName).Result;
 
-            //BruteForce(solution);
-            UsingSymbols(solution);
-        }
-
-        private static void UsingSymbols(Solution solution)
-        {
             foreach (var project in solution.Projects)
             {
                 foreach (var document in project.Documents)
                 {
-                    var semanticModel = document.GetSemanticModelAsync().Result;
-                    var root = document.GetSyntaxRootAsync().Result;
-                    foreach (var typeDeclaration in root.DescendantNodes().OfType<TypeDeclarationSyntax>())
-                    {
-                        ITypeSymbol symbol = (ITypeSymbol)semanticModel.GetDeclaredSymbol(typeDeclaration);
-                        if (symbol == null)
-                            continue;
-
-                        var containingNamespace = symbol.ContainingNamespace;
-                        var containingType = symbol.ContainingType;
-
-                        var s = "";
-                        if (containingType != null)
-                            s += containingType;
-                        else if (containingNamespace != null)
-                            s += containingNamespace;
-                        s += "."+symbol.Name;
-                        Console.WriteLine(s);
-                    }
+                    ProcessDocumentUsingSyntaxTrees(document);
+                    //ProcessDocumentUsingSemanticModel(document);
                 }
             }
         }
 
-        private static void BruteForce(Solution solution)
+        private static void ProcessDocumentUsingSemanticModel(Document document)
         {
-            foreach (var project in solution.Projects)
+            var semanticModel = document.GetSemanticModelAsync().Result;
+            var root = document.GetSyntaxRootAsync().Result;
+            foreach (var typeDeclaration in root.DescendantNodes().OfType<TypeDeclarationSyntax>())
             {
-                foreach (var document in project.Documents)
-                {
-                    ProcessDocument(document);
-                }
+                ITypeSymbol symbol = (ITypeSymbol) semanticModel.GetDeclaredSymbol(typeDeclaration);
+                if (symbol == null)
+                    continue;
+
+                var containingNamespace = symbol.ContainingNamespace;
+                var containingType = symbol.ContainingType;
+
+                var s = "";
+                if (containingType != null)
+                    s += containingType;
+                else if (containingNamespace != null)
+                    s += containingNamespace;
+                s += "." + symbol.Name;
+                Console.WriteLine(s);
             }
         }
 
-        private static void ProcessDocument(Document document)
+        private static void ProcessDocumentUsingSyntaxTrees(Document document)
         {
             var root = document.GetSyntaxRootAsync().Result;
             foreach (var namespaceDeclaration in root.ChildNodes().OfType<NamespaceDeclarationSyntax>())
@@ -76,7 +65,7 @@ namespace NamespacesAndClasses
         private static void ProcessNamespace(NamespaceDeclarationSyntax namespaceDeclaration, string container)
         {
             ProcessNestedNamespaces(namespaceDeclaration, container);
-            ProcessTypes(namespaceDeclaration, "["+container+"]");
+            ProcessTypesInContainer(namespaceDeclaration, "["+container+"]");
         }
 
         private static void ProcessNestedNamespaces(NamespaceDeclarationSyntax namespaceDeclaration, string container)
@@ -88,24 +77,15 @@ namespace NamespacesAndClasses
             }
         }
 
-        private static void ProcessTypes(NamespaceDeclarationSyntax namespaceDeclaration, string container)
+        private static void ProcessTypesInContainer(MemberDeclarationSyntax containerNode, string container)
         {
-            foreach (var typeDeclaration in namespaceDeclaration.ChildNodes().OfType<TypeDeclarationSyntax>())
+            foreach (var typeDeclaration in containerNode.ChildNodes().OfType<TypeDeclarationSyntax>())
             {
                 ProcessType(typeDeclaration, container);
                 var containingClassName = string.Format("{0}.{1}", container, typeDeclaration.Identifier);
-                ProcessInnerTypes(typeDeclaration, containingClassName);
+                ProcessTypesInContainer(typeDeclaration, containingClassName);
             }
-        }
 
-        private static void ProcessInnerTypes(TypeDeclarationSyntax typeDeclaration, string container)
-        {
-            foreach (var innerType in typeDeclaration.ChildNodes().OfType<TypeDeclarationSyntax>())
-            {
-                ProcessType(innerType, container);
-                var containingClassName = string.Format("{0}.{1}", container, innerType.Identifier);
-                ProcessInnerTypes(innerType, containingClassName);
-            }
         }
 
         private static void ProcessType(TypeDeclarationSyntax typeDeclaration, string container)
