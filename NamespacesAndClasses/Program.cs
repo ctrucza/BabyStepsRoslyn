@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.MSBuild;
@@ -24,8 +22,8 @@ namespace NamespacesAndClasses
             {
                 foreach (var document in project.Documents)
                 {
-                    ProcessDocumentUsingSyntaxTrees(document);
-                    //ProcessDocumentUsingSemanticModel(document);
+                    //ProcessDocumentUsingSyntaxTrees(document);
+                    ProcessDocumentUsingSemanticModel(document);
                 }
             }
         }
@@ -39,58 +37,37 @@ namespace NamespacesAndClasses
                 ITypeSymbol symbol = (ITypeSymbol) semanticModel.GetDeclaredSymbol(typeDeclaration);
                 if (symbol == null)
                     continue;
-
-                var containingNamespace = symbol.ContainingNamespace;
-                var containingType = symbol.ContainingType;
-
-                var s = "";
-                if (containingType != null)
-                    s += containingType;
-                else if (containingNamespace != null)
-                    s += containingNamespace;
-                s += "." + symbol.Name;
-                Console.WriteLine(s);
+                Console.WriteLine(symbol.Name);
             }
         }
 
         private static void ProcessDocumentUsingSyntaxTrees(Document document)
         {
             var root = document.GetSyntaxRootAsync().Result;
-            foreach (var namespaceDeclaration in root.ChildNodes().OfType<NamespaceDeclarationSyntax>())
+            foreach (var typeDeclarationSyntax in root.DescendantNodes().OfType<TypeDeclarationSyntax>())
             {
-                ProcessNamespace(namespaceDeclaration, namespaceDeclaration.Name.ToString());
+                ProcessType(typeDeclarationSyntax);
             }
         }
 
-        private static void ProcessNamespace(NamespaceDeclarationSyntax namespaceDeclaration, string container)
+        private static void ProcessType(TypeDeclarationSyntax typeDeclaration)
         {
-            ProcessNestedNamespaces(namespaceDeclaration, container);
-            ProcessTypesInContainer(namespaceDeclaration, "["+container+"]");
-        }
+            string fullName = typeDeclaration.Identifier.ToString();
 
-        private static void ProcessNestedNamespaces(NamespaceDeclarationSyntax namespaceDeclaration, string container)
-        {
-            foreach (var innerNamespace in namespaceDeclaration.ChildNodes().OfType<NamespaceDeclarationSyntax>())
+            while (typeDeclaration.Parent is TypeDeclarationSyntax)
             {
-                var containerName = string.Format("{0}.{1}", container, innerNamespace.Name);
-                ProcessNamespace(innerNamespace, containerName);
-            }
-        }
-
-        private static void ProcessTypesInContainer(MemberDeclarationSyntax containerNode, string container)
-        {
-            foreach (var typeDeclaration in containerNode.ChildNodes().OfType<TypeDeclarationSyntax>())
-            {
-                ProcessType(typeDeclaration, container);
-                var containingClassName = string.Format("{0}.{1}", container, typeDeclaration.Identifier);
-                ProcessTypesInContainer(typeDeclaration, containingClassName);
+                typeDeclaration = typeDeclaration.Parent as TypeDeclarationSyntax;
+                fullName = typeDeclaration.Identifier + "." + fullName;
             }
 
-        }
+            NamespaceDeclarationSyntax ns = typeDeclaration.Parent as NamespaceDeclarationSyntax;
+            while (ns != null)
+            {
+                fullName = ns.Name + "." + fullName;
+                ns = ns.Parent as NamespaceDeclarationSyntax;
+            }
 
-        private static void ProcessType(TypeDeclarationSyntax typeDeclaration, string container)
-        {
-            Console.WriteLine("{0}.{1}", container, typeDeclaration.Identifier);
+            Console.WriteLine(fullName);
         }
     }
 }
