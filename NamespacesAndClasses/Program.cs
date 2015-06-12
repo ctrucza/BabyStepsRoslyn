@@ -12,8 +12,8 @@ namespace NamespacesAndClasses
         {
             //var solutionFileName = args[0];
 
-            var solutionFileName = @"..\..\..\SampleSolution\SampleSolution.sln";
-            //var solutionFileName = @"..\..\..\BabyStepsRoslyn.sln";
+            //var solutionFileName = @"..\..\..\SampleSolution\SampleSolution.sln";
+            var solutionFileName = @"..\..\..\BabyStepsRoslyn.sln";
 
             var ws = MSBuildWorkspace.Create();
             var solution = ws.OpenSolutionAsync(solutionFileName).Result;
@@ -37,8 +37,36 @@ namespace NamespacesAndClasses
                 ITypeSymbol symbol = (ITypeSymbol) semanticModel.GetDeclaredSymbol(typeDeclaration);
                 if (symbol == null)
                     continue;
-                Console.WriteLine(symbol.Name);
+                
+                Console.WriteLine("{0} ({1})", symbol, typeDeclaration.GetText().Lines.Count);
+
+                foreach (var constructor in typeDeclaration.ChildNodes().OfType<ConstructorDeclarationSyntax>())
+                {
+                    var statementsSize = constructor.Body.Statements.Sum(statement => statement.GetText().Lines.Count);
+                    var statementCount = CountStatements(constructor.Body);
+                    var bodySize = constructor.Body.GetText().Lines.Count;
+                    Console.WriteLine("\t{0} ({1}/{2}/{3})", constructor.Identifier, bodySize, statementsSize, statementCount);
+                }
+                foreach (var method in typeDeclaration.ChildNodes().OfType<MethodDeclarationSyntax>())
+                {
+                    var methodName = method.Identifier.ToString();
+                    var statementsSize = method.Body.Statements.Sum(statement => statement.GetText().Lines.Count);
+                    var statementCount = CountStatements(method.Body);
+                    var bodySize = method.Body.GetText().Lines.Count;
+                    Console.WriteLine("\t{0} ({1}/{2}/{3})", methodName, bodySize, statementsSize, statementCount);
+                }
             }
+        }
+
+        private static int CountStatements(BlockSyntax body)
+        {
+            int result = 0;
+            result += body.Statements.Count;
+            foreach (var b in body.DescendantNodes().OfType<BlockSyntax>())
+            {
+                result += b.Statements.Count;
+            }
+            return result;
         }
 
         private static void ProcessDocumentUsingSyntaxTrees(Document document)
