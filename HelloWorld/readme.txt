@@ -9,7 +9,9 @@
     - find private methods not called
     - sort methods based on level of abstraction:
         - a method is of lower level of abstraction than it's callers
+
 - count fields and properties in classes
 	- count private and protected fields and properties
 	- find provate/protected fields and properties not used in all methods
+
 - level of abstraction: a method which calls another method is at higher level of abstraction

@@ -56,7 +56,7 @@ namespace NamespacesAndClasses
 
             while (typeDeclaration.Parent is TypeDeclarationSyntax)
             {
-                typeDeclaration = typeDeclaration.Parent as TypeDeclarationSyntax;
+                typeDeclaration = (TypeDeclarationSyntax) typeDeclaration.Parent;
                 fullName = typeDeclaration.Identifier + "." + fullName;
             }
 
